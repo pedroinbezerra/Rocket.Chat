@@ -176,7 +176,7 @@ jobs:
           tar czf /tmp/Rocket.Chat.tar.gz bundle
 
       - name: Store build
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: build
           path: /tmp/Rocket.Chat.tar.gz
@@ -374,7 +374,7 @@ jobs:
           yarn test:e2e
 
       - name: Store playwright test trace
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         if: always()
         with:
           name: playwright-test-trace
@@ -690,7 +690,7 @@ jobs:
           E2E_COVERAGE=true IS_EE=true yarn test:e2e
 
       - name: Store playwright test trace
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         if: always()
         with:
           name: e2e-ee-testtrace
@@ -708,7 +708,7 @@ jobs:
           verbose: true
 
       - name: Store e2e-ee-coverage
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: e2e-ee-coverage
           path: ./apps/meteor/coverage*
