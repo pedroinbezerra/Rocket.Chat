@@ -12,6 +12,8 @@ import {
 	isVoipEventCallAbandoned,
 	UserState,
 	ICallDetails,
+	ILivechatVisitor,
+	Serialized,
 } from '@rocket.chat/core-typings';
 import { useMutableCallback } from '@rocket.chat/fuselage-hooks';
 import {
@@ -36,6 +38,7 @@ import { OutgoingByeRequest } from 'sip.js/lib/core';
 import { CustomSounds } from '../../../app/custom-sounds/client';
 import { getUserPreference } from '../../../app/utils/client';
 import { isOutboundClient, useVoipClient } from '../../../ee/client/hooks/useVoipClient';
+import { parseOutboundPhoneNumber } from '../../../ee/client/lib/voip/parseOutboundPhoneNumber';
 import { WrapUpCallModal } from '../../../ee/client/voip/components/modals/WrapUpCallModal';
 import { CallContext, CallContextValue, useIsVoipEnterprise } from '../../contexts/CallContext';
 import { useDialModal } from '../../hooks/useDialModal';
@@ -76,6 +79,7 @@ export const CallProvider: FC = ({ children }) => {
 	const visitorEndpoint = useEndpoint('POST', '/v1/livechat/visitor');
 	const voipEndpoint = useEndpoint('GET', '/v1/voip/room');
 	const voipCloseRoomEndpoint = useEndpoint('POST', '/v1/voip/room.close');
+	const getContactBy = useEndpoint('GET', '/v1/omnichannel/contact.search');
 	const setModal = useSetModal();
 	const t = useTranslation();
 
@@ -149,12 +153,39 @@ export const CallProvider: FC = ({ children }) => {
 
 		setQueueAggregator(voipClient.getAggregator());
 
-		return (): void => voipClient.unregister();
-	}, [result]);
+		return (): void => {
+			if (clientState === 'registered') {
+				return voipClient.unregister();
+			}
+		};
+	}, [result, clientState]);
 
 	const openRoom = useCallback((rid: IVoipRoom['_id']): void => {
 		roomCoordinator.openRouteLink('v', { rid });
 	}, []);
+
+	const findOrCreateVisitor = useCallback(
+		async (caller: ICallerInfo): Promise<Serialized<ILivechatVisitor>> => {
+			const phone = parseOutboundPhoneNumber(caller.callerId);
+
+			const { contact } = await getContactBy({ phone });
+
+			if (contact) {
+				return contact;
+			}
+
+			const { visitor } = await visitorEndpoint({
+				visitor: {
+					token: Random.id(),
+					phone,
+					name: caller.callerName || phone,
+				},
+			});
+
+			return visitor;
+		},
+		[getContactBy, visitorEndpoint],
+	);
 
 	const createRoom = useCallback(
 		async (caller: ICallerInfo, direction: IVoipRoom['direction'] = 'inbound'): Promise<IVoipRoom['_id']> => {
@@ -162,13 +193,7 @@ export const CallProvider: FC = ({ children }) => {
 				return '';
 			}
 			try {
-				const { visitor } = await visitorEndpoint({
-					visitor: {
-						token: Random.id(),
-						phone: caller.callerId,
-						name: caller.callerName || caller.callerId,
-					},
-				});
+				const visitor = await findOrCreateVisitor(caller);
 				const voipRoom = await voipEndpoint({ token: visitor.token, agentId: user._id, direction });
 				openRoom(voipRoom.room._id);
 				voipRoom.room && setRoomInfo({ v: { token: voipRoom.room.v.token }, rid: voipRoom.room._id });
@@ -182,7 +207,7 @@ export const CallProvider: FC = ({ children }) => {
 				return '';
 			}
 		},
-		[openRoom, result.voipClient, user, visitorEndpoint, voipEndpoint],
+		[openRoom, result.voipClient, user, voipEndpoint, findOrCreateVisitor],
 	);
 
 	useEffect(() => {
@@ -385,13 +410,17 @@ export const CallProvider: FC = ({ children }) => {
 			stopAllRingback();
 		};
 
-		const onCallFailed = (reason: 'Not Found' | 'Address Incomplete' | string): void => {
+		const onCallFailed = (reason: 'Not Found' | 'Address Incomplete' | 'Request Terminated' | string): void => {
 			switch (reason) {
 				case 'Not Found':
+					// This happens when the call matches dialplan and goes to the world, but the trunk doesnt find the number.
 					openDialModal({ errorMessage: t('Dialed_number_doesnt_exist') });
 					break;
 				case 'Address Incomplete':
+					// This happens when the dialed number doesnt match a valid asterisk dialplan pattern or the number is invalid.
 					openDialModal({ errorMessage: t('Dialed_number_is_incomplete') });
+					break;
+				case 'Request Terminated':
 					break;
 				default:
 					openDialModal({ errorMessage: t('Something_went_wrong_try_again_later') });
@@ -499,6 +528,7 @@ export const CallProvider: FC = ({ children }) => {
 			openRoom,
 			createRoom,
 			closeRoom,
+			networkStatus,
 			openWrapUpModal,
 			changeAudioOutputDevice,
 			changeAudioInputDevice,
@@ -520,6 +550,7 @@ export const CallProvider: FC = ({ children }) => {
 		openWrapUpModal,
 		changeAudioOutputDevice,
 		changeAudioInputDevice,
+		networkStatus,
 	]);
 
 	return (

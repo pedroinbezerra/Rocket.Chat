@@ -1,13 +1,13 @@
-import type { UpdateResult, Document, FindCursor, FindOptions, Filter, WithId } from 'mongodb';
+import type { Document, Filter, FindCursor, FindOptions, UpdateResult, WithId } from 'mongodb';
 import type {
-	IUser,
-	IRole,
-	IRoom,
+	IBanner,
 	ILivechatAgent,
-	ILivechatDepartment,
 	ILivechatAgentStatus,
 	ILivechatBusinessHour,
-	IBanner,
+	ILivechatDepartment,
+	IRole,
+	IRoom,
+	IUser,
 	UserStatus,
 } from '@rocket.chat/core-typings';
 import type { PaginatedRequest } from '@rocket.chat/rest-typings';
@@ -16,16 +16,23 @@ import type { FindPaginated, IBaseModel } from './IBaseModel';
 
 export interface IUsersModel extends IBaseModel<IUser> {
 	addRolesByUserId(uid: IUser['_id'], roles: IRole['_id'][]): Promise<UpdateResult>;
+
 	findUsersInRoles(roles: IRole['_id'][] | IRole['_id'], scope?: null, options?: FindOptions<IUser>): FindCursor<IUser>;
+
 	findOneByUsername(username: IUser['username'], options?: FindOptions<IUser>): Promise<IUser | null>;
+
 	findOneAgentById(_id: ILivechatAgent['_id'], options?: FindOptions<ILivechatAgent>): Promise<ILivechatAgent | null>;
+
 	findUsersInRolesWithQuery(roles: IRole['_id'] | IRole['_id'][], query: Filter<IUser>, options?: FindOptions<IUser>): FindCursor<IUser>;
+
 	findOneByUsernameAndRoomIgnoringCase(
 		username: IUser['username'] | RegExp,
 		rid: IRoom['_id'],
 		options?: FindOptions<IUser>,
 	): Promise<IUser | null>;
+
 	findOneByIdAndLoginHashedToken(_id: IUser['_id'], token: any, options?: FindOptions<IUser>): Promise<IUser | null>;
+
 	findByActiveUsersExcept(
 		searchTerm: string,
 		exceptions: IUser['username'][] | IUser['username'],
@@ -44,6 +51,8 @@ export interface IUsersModel extends IBaseModel<IUser> {
 	findOneByUsernameIgnoringCase(username: IUser['username'], options: FindOptions<IUser>): Promise<IUser | null>;
 
 	findOneByLDAPId(id: string, attribute?: any): Promise<IUser | null>;
+
+	findOneByAppId(appId: string, options?: FindOptions<IUser>): Promise<IUser | null>;
 
 	findLDAPUsers(options?: FindOptions<IUser>): FindCursor<IUser>;
 
@@ -198,4 +207,8 @@ export interface IUsersModel extends IBaseModel<IUser> {
 	findActiveByIdsOrUsernames(userIds: IUser['_id'][], options?: FindOptions<IUser>): FindCursor<IUser>;
 
 	setAsFederated(userId: IUser['_id']): Promise<UpdateResult>;
+
+	removeRoomByRoomId(rid: any): any;
+
+	findOneByResetToken(token: string, options: FindOptions<IUser>): Promise<IUser | null>;
 }

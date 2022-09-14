@@ -1,29 +1,38 @@
-import { IMessage } from '@rocket.chat/core-typings';
+import { IMessage, isTranslatedMessage, ITranslatedMessage } from '@rocket.chat/core-typings';
 import { Root, parse } from '@rocket.chat/message-parser';
-import { useSetting } from '@rocket.chat/ui-contexts';
 import { useMemo } from 'react';
 
-export function useParsedMessage(message: Pick<IMessage, 'md' | 'msg'>): Root {
-	const colors = useSetting('HexColorPreview_Enabled') as boolean;
-	const katexDollarSyntax = useSetting('Katex_Dollar_Syntax') as boolean;
-	const katexParenthesisSyntax = useSetting('Katex_Parenthesis_Syntax') as boolean;
+import { useMessageListContext, useShowTranslated } from '../contexts/MessageListContext';
+
+export function useParsedMessage(message: IMessage & Partial<ITranslatedMessage>): Root {
+	const { autoTranslateLanguage, katex, showColors } = useMessageListContext();
+	const translated = useShowTranslated({ message });
+	const translations = isTranslatedMessage(message) && message.translations;
+	const { md, msg } = message;
 
 	return useMemo(() => {
-		if (message.md) {
-			return message.md;
+		const parseOptions = {
+			colors: showColors,
+			emoticons: true,
+			...(katex && {
+				katex: {
+					dollarSyntax: katex.dollarSyntaxEnabled,
+					parenthesisSyntax: katex.parenthesisSyntaxEnabled,
+				},
+			}),
+		};
+
+		if (translated && autoTranslateLanguage && translations) {
+			return parse(translations[autoTranslateLanguage], parseOptions);
+		}
+		if (md) {
+			return md;
 		}
 
-		if (!message.msg) {
+		if (!msg) {
 			return [];
 		}
 
-		return parse(message.msg, {
-			colors,
-			emoticons: true,
-			katex: {
-				dollarSyntax: katexDollarSyntax,
-				parenthesisSyntax: katexParenthesisSyntax,
-			},
-		});
-	}, [colors, katexDollarSyntax, katexParenthesisSyntax, message.md, message.msg]);
+		return parse(msg, parseOptions);
+	}, [showColors, katex, autoTranslateLanguage, md, msg, translated, translations]);
 }

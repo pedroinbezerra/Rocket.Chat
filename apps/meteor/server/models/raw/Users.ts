@@ -338,7 +338,17 @@ export class UsersRaw extends BaseRaw<IUser> implements IUsersModel {
 		return this.findOne(query);
 	}
 
+<<<<<<< HEAD:apps/meteor/server/models/raw/Users.ts
 	findLDAPUsers(options: FindOptions<IUser> = {}): FindCursor<IUser> {
+=======
+	async findOneByAppId(appId, options) {
+		const query = { appId };
+
+		return this.findOne(query, options);
+	}
+
+	findLDAPUsers(options) {
+>>>>>>> develop:apps/meteor/server/models/raw/Users.js
 		const query = { ldap: true };
 
 		return this.find(query, options);
@@ -504,15 +514,22 @@ export class UsersRaw extends BaseRaw<IUser> implements IUsersModel {
 		return agent;
 	}
 
+<<<<<<< HEAD:apps/meteor/server/models/raw/Users.ts
 	async setLastRoutingTime(agentId: ILivechatAgent['_id']): Promise<WithId<IUser> | null> {
 		// FIXME
 		const result = await this.col.findOneAndUpdate(
 			{ _id: agentId },
+=======
+	async setLastRoutingTime(userId) {
+		const result = await this.findOneAndUpdate(
+			{ _id: userId },
+>>>>>>> develop:apps/meteor/server/models/raw/Users.js
 			{
 				$set: {
 					lastRoutingTime: new Date(),
 				},
 			},
+			{ returnDocument: 'after' },
 		);
 		return result.value;
 	}
@@ -549,8 +566,12 @@ export class UsersRaw extends BaseRaw<IUser> implements IUsersModel {
 		const aggregate: Exclude<Parameters<Collection<ILivechatAgent>['aggregate']>[0], undefined> = [
 			{
 				$match: {
+<<<<<<< HEAD:apps/meteor/server/models/raw/Users.ts
 					_id: agentId,
 					status: { $exists: true, $ne: 'offline' },
+=======
+					_id: userId,
+>>>>>>> develop:apps/meteor/server/models/raw/Users.js
 					statusLivechat: 'available',
 					roles: 'livechat-agent',
 				},
@@ -1154,7 +1175,11 @@ export class UsersRaw extends BaseRaw<IUser> implements IUsersModel {
 			_id: uid,
 		};
 
+<<<<<<< HEAD:apps/meteor/server/models/raw/Users.ts
 		const options: FindOptions<IUser> = {
+=======
+		const options = {
+>>>>>>> develop:apps/meteor/server/models/raw/Users.js
 			projection: { _id: 1 },
 		};
 
@@ -1282,5 +1307,20 @@ export class UsersRaw extends BaseRaw<IUser> implements IUsersModel {
 			},
 		};
 		return this.updateOne(query, update);
+	}
+
+	removeRoomByRoomId(rid) {
+		return this.updateMany(
+			{
+				__rooms: rid,
+			},
+			{
+				$pull: { __rooms: rid },
+			},
+		);
+	}
+
+	findOneByResetToken(token, options) {
+		return this.findOne({ 'services.password.reset.token': token }, options);
 	}
 }

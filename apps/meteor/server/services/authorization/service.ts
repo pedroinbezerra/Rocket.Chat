@@ -1,9 +1,9 @@
-import { Db, Collection, FindOptions } from 'mongodb';
+import type { Collection, Db, FindOptions } from 'mongodb';
 import mem from 'mem';
-import type { IUser, IRole, IRoom, ISubscription } from '@rocket.chat/core-typings';
-import { Subscriptions, Rooms, Users, Roles } from '@rocket.chat/models';
+import type { IRole, IRoom, ISubscription, IUser } from '@rocket.chat/core-typings';
+import { Roles, Rooms, Subscriptions, Users } from '@rocket.chat/models';
 
-import { IAuthorization, RoomAccessValidator } from '../../sdk/types/IAuthorization';
+import type { IAuthorization, RoomAccessValidator } from '../../sdk/types/IAuthorization';
 import { ServiceClass } from '../../sdk/types/ServiceClass';
 import { AuthorizationUtils } from '../../../app/authorization/lib/AuthorizationUtils';
 import { canAccessRoom } from './canAccessRoom';
@@ -156,7 +156,13 @@ export class Authorization extends ServiceClass implements IAuthorization {
 		const { roles: userRoles = [] } = (await Users.findOneById(uid, { projection: { roles: 1 } })) || {};
 		const { roles: subscriptionsRoles = [] } =
 			(scope &&
-				(await Subscriptions.findOne<Pick<ISubscription, 'roles'>>({ 'rid': scope, 'u._id': uid }, { projection: { roles: 1 } }))) ||
+				(await Subscriptions.findOne<Pick<ISubscription, 'roles'>>(
+					{
+						'rid': scope,
+						'u._id': uid,
+					},
+					{ projection: { roles: 1 } },
+				))) ||
 			{};
 		return [...userRoles, ...subscriptionsRoles].sort((a, b) => a.localeCompare(b));
 	}

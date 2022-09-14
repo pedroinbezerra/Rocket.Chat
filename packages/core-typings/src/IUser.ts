@@ -17,7 +17,7 @@ export interface IPersonalAccessToken extends ILoginToken {
 	type: 'personalAccessToken';
 	createdAt: Date;
 	lastTokenPart: string;
-	name?: string;
+	name: string;
 	bypassTwoFactor?: boolean;
 }
 
@@ -146,13 +146,18 @@ export interface IUser extends IRocketChatRecord {
 	inviteToken?: string;
 	federated?: boolean;
 	__rooms?: IRoom['_id'][];
+	canViewAllInfo?: boolean;
+	phone?: string;
+	reason?: string;
 }
 
 export interface IRegisterUser extends IUser {
 	username: string;
 	name: string;
 }
+
 export const isRegisterUser = (user: IUser): user is IRegisterUser => user.username !== undefined && user.name !== undefined;
+export const isUserFederated = (user: Partial<IUser>): user is IUser => 'federated' in user && user.federated === true;
 
 export type IUserDataEvent = {
 	id: unknown;

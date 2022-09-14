@@ -56,6 +56,8 @@ type OmnichannelTypesValues =
 	| 'omnichannel_placed_chat_on_hold'
 	| 'omnichannel_on_hold_chat_resumed';
 
+type OtrMessageTypeValues = 'otr' | 'otr-ack';
+
 type OtrSystemMessages = 'user_joined_otr' | 'user_requested_otr_key_refresh' | 'user_key_refreshed_successfully';
 
 export type MessageTypesValues =
@@ -86,10 +88,12 @@ export type MessageTypesValues =
 	| 'room-set-read-only'
 	| 'room-allowed-reacting'
 	| 'room-disallowed-reacting'
+	| 'command'
 	| LivechatMessageTypes
 	| TeamMessageTypes
 	| VoipMessageTypesValues
 	| OmnichannelTypesValues
+	| OtrMessageTypeValues
 	| OtrSystemMessages;
 
 export type TokenType = 'code' | 'inlinecode' | 'bold' | 'italic' | 'strike' | 'link';
@@ -109,6 +113,7 @@ export interface IMessage extends IRocketChatRecord {
 	rid: RoomID;
 	msg: string;
 	tmid?: string;
+	tshow?: boolean;
 	ts: Date;
 	mentions?: ({
 		type: MentionType;
@@ -121,14 +126,12 @@ export interface IMessage extends IRocketChatRecord {
 	alias?: string;
 	md?: ReturnType<typeof parser>;
 
-	// TODO: chapter day frontend - wrong type
-	ignored?: boolean;
 	_hidden?: boolean;
 	imported?: boolean;
 	replies?: IUser['_id'][];
 	location?: {
 		type: 'Point';
-		coordinates: [string, string];
+		coordinates: [number, number];
 	};
 	starred?: { _id: IUser['_id'] }[];
 	pinned?: boolean;
@@ -141,6 +144,7 @@ export interface IMessage extends IRocketChatRecord {
 	tcount?: number;
 	t?: MessageTypesValues;
 	e2e?: 'pending' | 'done';
+	otrAck?: string;
 
 	urls?: MessageUrl[];
 
@@ -192,6 +196,7 @@ export const isEditedMessage = (message: IMessage): message is IEditedMessage =>
 
 export interface ITranslatedMessage extends IMessage {
 	translations: { [key: string]: string } & { original?: string };
+	translationProvider: string;
 	autoTranslateShowInverse?: boolean;
 	autoTranslateFetching?: boolean;
 }
@@ -306,3 +311,15 @@ export type IMessageInbox = IMessage & {
 
 export const isIMessageInbox = (message: IMessage): message is IMessageInbox => 'email' in message;
 export const isVoipMessage = (message: IMessage): message is IVoipMessage => 'voipData' in message;
+
+export type IE2EEMessage = IMessage & {
+	t: 'e2e';
+	e2e: 'pending' | 'done';
+};
+
+export type IOTRMessage = IMessage & {
+	t: 'otr' | 'otr-ack';
+};
+
+export const isE2EEMessage = (message: IMessage): message is IE2EEMessage => message.t === 'e2e';
+export const isOTRMessage = (message: IMessage): message is IOTRMessage => message.t === 'otr' || message.t === 'otr-ack';

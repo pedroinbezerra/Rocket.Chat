@@ -2,10 +2,12 @@ import type { IVoipRoom } from '@rocket.chat/core-typings';
 import { ICallerInfo, VoIpCallerInfo, VoipClientEvents } from '@rocket.chat/core-typings';
 import { css } from '@rocket.chat/css-in-js';
 import { Box, Button, ButtonGroup, Icon, SidebarFooter, Menu, IconButton } from '@rocket.chat/fuselage';
+import { useTranslation } from '@rocket.chat/ui-contexts';
 import React, { ReactElement, MouseEvent, ReactNode } from 'react';
 
 import type { VoipFooterMenuOptions } from '../../../../ee/client/hooks/useVoipFooterMenu';
 import { CallActionsType } from '../../../contexts/CallContext';
+import { useOmnichannelContactLabel } from './hooks/useOmnichannelContactLabel';
 
 type VoipFooterPropsType = {
 	caller: ICallerInfo;
@@ -30,7 +32,6 @@ type VoipFooterPropsType = {
 	openRoom: (rid: IVoipRoom['_id']) => void;
 	dispatchEvent: (params: { event: VoipClientEvents; rid: string; comment?: string }) => void;
 	openedRoomInfo: { v: { token?: string | undefined }; rid: string };
-	anonymousText: string;
 	isEnterprise: boolean;
 	children?: ReactNode;
 	options: VoipFooterMenuOptions;
@@ -52,11 +53,13 @@ export const VoipFooter = ({
 	callsInQueue,
 	dispatchEvent,
 	openedRoomInfo,
-	anonymousText,
 	isEnterprise = false,
 	children,
 	options,
 }: VoipFooterPropsType): ReactElement => {
+	const contactLabel = useOmnichannelContactLabel(caller);
+	const t = useTranslation();
+
 	const cssClickable =
 		callerState === 'IN_CALL' || callerState === 'ON_HOLD'
 			? css`
@@ -96,7 +99,6 @@ export const VoipFooter = ({
 								color={muted ? 'neutral-500' : 'info'}
 								icon='mic'
 								small
-								square
 								onClick={(e): void => {
 									e.stopPropagation();
 									toggleMic(!muted);
@@ -108,7 +110,6 @@ export const VoipFooter = ({
 								icon='pause-unfilled'
 								color={paused ? 'neutral-500' : 'info'}
 								small
-								square
 								onClick={handleHold}
 							/>
 							{options && <Menu color='neutral-500' options={options} />}
@@ -118,7 +119,7 @@ export const VoipFooter = ({
 				<Box display='flex' flexDirection='row' mi='16px' mbe='12px' justifyContent='space-between' alignItems='center'>
 					<Box>
 						<Box color='white' fontScale='p2' withTruncatedText>
-							{caller.callerName || caller.callerId || anonymousText}
+							{contactLabel || t('Anonymous')}
 						</Box>
 						<Box color='hint' fontScale='c1' withTruncatedText>
 							{subtitle}
@@ -133,6 +134,7 @@ export const VoipFooter = ({
 								small
 								square
 								danger
+								aria-label={t('End_call')}
 								onClick={(e): unknown => {
 									e.stopPropagation();
 									muted && toggleMic(false);
@@ -144,7 +146,7 @@ export const VoipFooter = ({
 							</Button>
 						)}
 						{callerState === 'OFFER_RECEIVED' && (
-							<Button title={tooltips.endCall} small square danger onClick={callActions.reject}>
+							<Button title={tooltips.endCall} aria-label={t('Reject_call')} small square danger onClick={callActions.reject}>
 								<Icon name='phone-off' size='x16' />
 							</Button>
 						)}
