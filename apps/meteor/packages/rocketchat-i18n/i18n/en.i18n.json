@@ -614,6 +614,7 @@
   "Audio_Notifications_Default_Alert": "Audio Notifications Default Alert",
   "Audio_Notifications_Value": "Default Message Notification Audio",
   "Audios": "Audios",
+  "Audit": "Audit",
   "Auditing": "Auditing",
   "Auth": "Auth",
   "Auth_Token": "Auth Token",
@@ -3060,6 +3061,8 @@
   "manage-voip-call-settings_description": "Permission to manage voip call settings",
   "manage-voip-contact-center-settings": "Manage Voip Contact Center Settings",
   "manage-voip-contact-center-settings_description": "Permission to manage voip contact center settings",
+  "Manage_Omnichannel": "Manage Omnichannel",
+  "Manage_workspace": "Manage workspace",
   "Manager_added": "Manager added",
   "Manager_removed": "Manager removed",
   "Managers": "Managers",
@@ -5433,5 +5436,6 @@
   "Device_Management_IP": "IP",
   "Device_Management_Email_Subject": "[Site_Name] - Login Detected",
   "Device_Management_Email_Body": "You may use the following placeholders: <h2 class=\"rc-color\">{Login_Detected}</h2><p><strong>[name] ([username]) {Logged_In_Via}</strong></p><p><strong>{Device_Management_Client}:</strong> [browserInfo]<br><strong>{Device_Management_OS}:</strong> [osInfo]<br><strong>{Device_Management_Device}:</strong> [deviceInfo]<br><strong>{Device_Management_IP}:</strong>[ipInfo]</p><p><small>[userAgent]</small></p><a class=\"btn\" href=\"[Site_URL]\">{Access_Your_Account}</a><p>{Or_Copy_And_Paste_This_URL_Into_A_Tab_Of_Your_Browser}<br><a href=\"[Site_URL]\">[SITE_URL]</a></p><p>{Thank_You_For_Choosing_RocketChat}</p>",
-  "Something_Went_Wrong": "Something went wrong"
+  "Something_Went_Wrong": "Something went wrong",
+  "Workspace_settings": "Workspace settings"
 }
